@@ -4,6 +4,8 @@ from CoolProp.CoolProp import PhaseSI, PropsSI, get_global_param_string
 import CoolProp.CoolProp as CoolProp
 from CoolProp.HumidAirProp import HAPropsSI
 from math import sin
+from matplotlib import pyplot as plt
+import numpy as np
 
 #parametry obiegu gazowego
 t_1 = 10
@@ -60,7 +62,6 @@ m_gas = P_GT/((h_4 - h_5s) * eta_iGT * eta_mGT * eta_eGen - (h_2s - h_1)*eta_iGC
 print("Strumień masy spalin przepływajacych przez turbinę gazową: " + str(m_gas) + " kg/s")
 #Ciepło oddawane do parowacza obiegu Claussiusa - Rankine'a
 Q_56 = m_gas*(h_5 - h_6)
-print("Ilość ciepła oddana przez spaliny do parowacza obiegu C-R: " + str(Q_56) + " J")
 #zakładam, że wymiana ciepła w parowaczu obiegu Rankine'a jest idealna
 #Q_5_6 = Q_11_12
 #m_gas*(h_5 - h_6) = m_steam*(h_12 - h_11)
@@ -85,10 +86,11 @@ delta_h_1011 = v_10*(p_12 - p_cond)
 h_11 = h_10 + delta_h_1011
 #ciepło odbierane od pierwszego obiegu
 Q_1112 = m_steam*(h_12 - h_11)
-print("Ilość ciepła pobierana od spalin do obiegu C-R: " + str(Q_1112) + " J")
 #wymagana nadwyżka ciepła do zasilenia obiegu C-R
 Q_HRSG = Q_56 - Q_1112
-print("Wymagana nadwyżka ciepła do zasilania obiegu C-R: " + str(Q_HRSG) + " J. ")
+if Q_HRSG >= 0
+    print("Wymagana nadwyżka ciepła do zasilania obiegu C-R: " + str(
+        Q_HRSG) + " J.")
 #OBLICZENIA CIEPLNE OBIEGU CHŁODZENIA
 #entalpia wody ogrzanej
 h_21 = PropsSI("H", "T", t_21 + 273.15, "P", p_21, "water")
@@ -108,8 +110,29 @@ P_wz = delta_h_1011 * m_steam * eta_iPump * eta_mePump
 #pompa wody chłodzącej
 P_cw = delta_h_2022 * m_cond * eta_iPump * eta_mePump
 #SPRAWNOŚĆ BLOKU GAZOWO - PAROWEGO NETTO - liczona na podstawie parametrów turbin
-eta_bNet = (P_GT + P_ST)/((h_4 - h_2)*m_gas)
+eta_bNet = (P_GT + P_ST) / ((h_4 - h_2)*(1/eta_comb) * m_gas)
 print("Sprawność obiegu netto (przy założeniu, że ciepło oddawanie w parowaczu jest wystarczające): " + str(eta_bNet) + " %")
 #SPRAWNOŚĆ BLOKU GAZOWO - PAROWEGO BRUTTO (UWZGLĘDNIA MOC POMP)
-eta_bb = (P_GT + P_ST - P_wz - P_cw)/((h_4 - h_2)*m_gas)
+eta_bb = (P_GT + P_ST - P_wz - P_cw)/((h_4 - h_2)*(1/eta_comb)*m_gas)
 print("Sprawność obiegu brutto (uwzględnia pobór energii na pompy): " + str(eta_bb) + " %")
+#SPRAWNOŚĆ OBIEGU BRAYTONA
+eta_B = P_GT / ((h_4 - h_2)*(1/eta_comb) * m_gas)
+print("Sprawność samego obiegu braytona: " + str(eta_B) + " %")
+#SPRAWNOŚĆ OBIEGU CLAUSIUSSA - RANKINE'A
+eta_CR = (P_ST - P_wz - P_cw ) / ((h_4 - h_2)*(1/eta_comb) * m_gas)
+print("Sprawność samego obiegu Claussiusa-Ranakine'a: " + str(eta_CR) + " %")
+
+x = np.arange(0, 500, 10)
+y = (P_GT + P_ST) / ((PropsSI( "H", "T", (t_4 + 273.15), "P", x * p_1, "air") -
+                      (eta_iGC *((PropsSI( "H", "S", s_1, "P", x * p_1, "air")) - h_1) + h_1)) *
+                     (P_GT/(((PropsSI( "H", "T", (t_4 + 273.15), "P", x*p_1, "air") -
+                      (PropsSI( "H", "S", (PropsSI( "S", "T", (t_4 + 273.15), "P", x * p_1, "air")), "P", p_1, "air"))) * eta_iGT * eta_mGT * eta_eGen -
+                     (eta_iGC*((PropsSI( "H", "S", s_1, "P", x * p_1, "air") - h_1)*eta_iGC * eta_mGT))))))
+plt.plot(x, y)
+plt.grid(True)
+plt.xlim(0, 500)
+plt.xlabel("spręż k = p_2/p_1")
+plt.ylabel("Sprawność obiegu Parowo - gazowego")
+plt.title("Wykres przedstawiający wpływ sprężu na sprawność")
+plt.savefig("fig1.png", dpi = 72)
+plt.show()
