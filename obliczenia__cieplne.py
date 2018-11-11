@@ -1,3 +1,4 @@
+# coding=UTF-8
 from __future__ import print_function
 from CoolProp import AbstractState
 from CoolProp.CoolProp import PhaseSI, PropsSI, get_global_param_string
@@ -88,7 +89,7 @@ h_11 = h_10 + delta_h_1011
 Q_1112 = m_steam*(h_12 - h_11)
 #wymagana nadwyżka ciepła do zasilenia obiegu C-R
 Q_HRSG = Q_56 - Q_1112
-if Q_HRSG >= 0
+if Q_HRSG >= 0:
     print("Wymagana nadwyżka ciepła do zasilania obiegu C-R: " + str(
         Q_HRSG) + " J.")
 #OBLICZENIA CIEPLNE OBIEGU CHŁODZENIA
@@ -122,17 +123,19 @@ print("Sprawność samego obiegu braytona: " + str(eta_B) + " %")
 eta_CR = (P_ST - P_wz - P_cw ) / ((h_4 - h_2)*(1/eta_comb) * m_gas)
 print("Sprawność samego obiegu Claussiusa-Ranakine'a: " + str(eta_CR) + " %")
 
-x = np.arange(0, 500, 10)
-y = (P_GT + P_ST) / ((PropsSI( "H", "T", (t_4 + 273.15), "P", x * p_1, "air") -
-                      (eta_iGC *((PropsSI( "H", "S", s_1, "P", x * p_1, "air")) - h_1) + h_1)) *
+xs = np.arange(0, 500, 10)
+ys =  np.zeros(xs.size)
+for x in range(0, xs.size):
+  ys[x] = (P_GT + P_ST) / ((PropsSI( "H", "T", (t_4 + 273.15), "P", x * p_1, "air") -
+                      (eta_iGC * ((PropsSI( "H", "S", s_1, "P", x * p_1, "air")) - h_1) + h_1)) *
                      (P_GT/(((PropsSI( "H", "T", (t_4 + 273.15), "P", x*p_1, "air") -
                       (PropsSI( "H", "S", (PropsSI( "S", "T", (t_4 + 273.15), "P", x * p_1, "air")), "P", p_1, "air"))) * eta_iGT * eta_mGT * eta_eGen -
-                     (eta_iGC*((PropsSI( "H", "S", s_1, "P", x * p_1, "air") - h_1)*eta_iGC * eta_mGT))))))
-plt.plot(x, y)
+                     (eta_iGC * ((PropsSI( "H", "S", s_1, "P", x * p_1, "air") - h_1) * eta_iGC * eta_mGT))))))
+plt.plot(xs, ys)
 plt.grid(True)
 plt.xlim(0, 500)
-plt.xlabel("spręż k = p_2/p_1")
-plt.ylabel("Sprawność obiegu Parowo - gazowego")
-plt.title("Wykres przedstawiający wpływ sprężu na sprawność")
+plt.xlabel(u"spręż k = p_2/p_1")
+plt.ylabel(u"Sprawność obiegu Parowo - gazowego")
+plt.title(u"Wykres przedstawiający wpływ sprężu na sprawność")
 plt.savefig("fig1.png", dpi = 72)
 plt.show()
